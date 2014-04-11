@@ -15,6 +15,8 @@
 #ifndef CEPH_PG_H
 #define CEPH_PG_H
 
+#define PG_DEBUG_REFS
+
 #include <boost/statechart/custom_reaction.hpp>
 #include <boost/statechart/event.hpp>
 #include <boost/statechart/simple_state.hpp>
@@ -1999,7 +2001,7 @@ public:
     vector<pg_log_entry_t> &log_entries,
     ObjectStore::Transaction& t);
 
-  void filter_snapc(SnapContext& snapc);
+  void filter_snapc(vector<snapid_t> &snaps);
 
   void log_weirdness();
 
