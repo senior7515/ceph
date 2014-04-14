@@ -7693,14 +7693,34 @@ void ReplicatedPG::_scrub(ScrubMap& scrubmap)
 	continue;
       }
 
-      if (soid.snap != *curclone) {
+      while (curclone != snapset.clones.rend() &&
+	     soid.snap != *curclone) {
 	osd->clog.error() << mode << " " << info.pgid << " " << soid
-			  << " expected clone " << *curclone;
+			  << " missing clone " << *curclone;
         ++scrubber.shallow_errors;
-	assert(soid.snap == *curclone);
+	++curclone;
       }
 
-      assert(p->second.size == snapset.clone_size[*curclone]);
+      if (curclone != snapset.clones.rend() &&
+	  *curclone == soid.snap) {
+	if (!snapset.clone_size.count(*curclone)) {
+	  osd->clog.error() << mode << " " << info.pgid << " " << soid
+			    << " snapset clone_size for " << soid
+			    << " missing, should be "
+			    << p->second.size;
+	  ++scrubber.shallow_errors;
+	} else if (p->second.size != snapset.clone_size[*curclone]) {
+	  osd->clog.error() << mode << " " << info.pgid << " " << soid
+			    << " clone size for clone " << *curclone
+			    << p->second.size << ", expected "
+			    << snapset.clone_size[*curclone];
+	  ++scrubber.shallow_errors;
+	}
+      } else {
+	osd->clog.error() << mode << " " << info.pgid << " " << soid
+			  << " clone missing";
+        ++scrubber.shallow_errors;
+      }
 
       // verify overlap?
       // ...
