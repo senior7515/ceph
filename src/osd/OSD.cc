@@ -5089,6 +5089,11 @@ void OSD::dispatch_op(OpRequestRef op)
 }
 
 bool OSD::dispatch_op_fast(OpRequestRef op, OSDMapRef osdmap) {
+  if (is_stopping()) {
+    // we're shutting down, so drop the op
+    return true;
+  }
+
   epoch_t msg_epoch(op_required_epoch(op));
   if (msg_epoch > osdmap->get_epoch()) {
     Session *s = static_cast<Session*>(op->get_req()->
